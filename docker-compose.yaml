@@ -9,6 +9,8 @@ services:
     networks:
       - nginx-net
     restart: unless-stopped
+    labels:
+             - com.centurylinklabs.watchtower.enable=true
   frontend:
     container_name: padel-checker-frontend
     build:
@@ -19,6 +21,8 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
 
 networks:
   nginx-net:
