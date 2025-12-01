@@ -1,0 +1,8 @@
+<router-outlet></router-outlet>
+@if (spinner()) {
+  <div>
+    <div class="fixed inset-0 text-white bg-opacity-75 flex items-center justify-center z-50">
+      <fa-icon [icon]="faSpinner" animation="spin" size="6x"></fa-icon>
+    </div>
+  </div>
+}

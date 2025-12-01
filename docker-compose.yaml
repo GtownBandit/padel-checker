@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  backend:
+    container_name: padel-checker-backend
+    build:
+      context: ./backend
+      dockerfile: dockerfile
+    networks:
+      - nginx-net
+    restart: unless-stopped
+  frontend:
+    container_name: padel-checker-frontend
+    build:
+      context: ./frontend
+      dockerfile: dockerfile
+    networks:
+      - nginx-net
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  nginx-net:
+    external: true
