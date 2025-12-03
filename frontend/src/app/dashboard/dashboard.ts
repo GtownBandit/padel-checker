@@ -25,8 +25,8 @@ export class Dashboard {
         slots: data['data'].slots.filter((slot: Slot) => slot.date !== this.todayString()),
       });
       this.spinnerService.hide();
-      // this.fetchAdditionalSlots(5);
-      // this.fetchAdditionalSlots(10);
+      this.fetchAdditionalSlots(5);
+      this.fetchAdditionalSlots(10);
     });
   }
 
