@@ -197,4 +197,10 @@ export class Dashboard {
     this.showJackpotOnly.set(value);
     if (value) this.showGoldenOnly.set(false);
   }
+
+  hasSlotsForDate(date: string): boolean {
+    const filtered = this.filteredOpenSlotsByDateAndCourt[date];
+    if (!filtered) return false;
+    return this.courtOrder.some((court) => filtered[court] && filtered[court].length > 0);
+  }
 }
