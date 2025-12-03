@@ -1,6 +1,36 @@
 @if (eversportsData()) {
   <div class="container mx-auto px-2 py-6 bg-gray-900 min-h-screen">
     <h1 class="text-2xl font-bold mb-6 text-center text-gray-100">Upcoming Open Padel Slots</h1>
+    <h2 class="text-base font-semibold mb-2 text-center text-yellow-300">Good Slot Times</h2>
+    <div class="flex flex-col items-center mb-6">
+      <div class="text-xs text-gray-200 mb-2 border-2 border-gray-200 rounded px-3 py-1">
+        <span class="font-bold">Mon–Fri:</span> 15:00–18:00<br />
+        <span class="font-bold">Sat & Sun:</span> 08:00–18:00
+      </div>
+      <div class="w-full flex flex-col items-center">
+        <label class="text-xs font-semibold text-gray-300 mb-2">Filter by slot type:</label>
+        <div class="flex gap-4">
+          <button
+            class="px-4 py-2 rounded font-semibold shadow bg-white text-yellow-900 border border-yellow-400 hover:bg-yellow-100 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            [class.bg-yellow-200]="showGoldenOnly()"
+            [class.border-2]="showGoldenOnly()"
+            (click)="setGoldenOnly(!showGoldenOnly())"
+            aria-pressed="{{ showGoldenOnly() }}"
+          >
+            1h Good Slots
+          </button>
+          <button
+            class="px-4 py-2 rounded font-semibold shadow bg-white text-yellow-900 border border-yellow-500 hover:bg-yellow-100 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            [class.bg-yellow-300]="showJackpotOnly()"
+            [class.border-2]="showJackpotOnly()"
+            (click)="setJackpotOnly(!showJackpotOnly())"
+            aria-pressed="{{ showJackpotOnly() }}"
+          >
+            2h Good Slots
+          </button>
+        </div>
+      </div>
+    </div>
     @for (date of dates; track date) {
       <section class="mb-6">
         <h2 class="text-lg font-semibold mb-3 text-gray-200 border-b border-gray-700 pb-1">
@@ -11,7 +41,7 @@
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           @for (court of courtOrder; track court) {
-            @if (openSlotsByDateAndCourt[date][court]) {
+            @if (filteredOpenSlotsByDateAndCourt[date][court]) {
               <div>
                 <div
                   class="mb-2 text-xs font-bold uppercase tracking-wide text-gray-400 text-center"
@@ -19,7 +49,7 @@
                   {{ courtName(court) }}
                 </div>
                 <div class="flex flex-wrap gap-2 justify-center">
-                  @for (slot of openSlotsByDateAndCourt[date][court]; track slot.start) {
+                  @for (slot of filteredOpenSlotsByDateAndCourt[date][court]; track slot.start) {
                     <div
                       class="rounded shadow p-2 flex flex-col items-center border hover:shadow-lg transition-shadow duration-150 text-xs min-w-0 select-none"
                       [class.bg-gray-800]="court === 110271"

@@ -14,6 +14,8 @@ import { SpinnerService } from '../spinner.service';
 })
 export class Dashboard {
   readonly eversportsData = signal<EversportsData | null>(null);
+  readonly showGoldenOnly = signal(false);
+  readonly showJackpotOnly = signal(false);
   private readonly route = inject(ActivatedRoute);
   private readonly httpClient = inject(HttpClient);
 
@@ -23,8 +25,8 @@ export class Dashboard {
         slots: data['data'].slots.filter((slot: Slot) => slot.date !== this.todayString()),
       });
       this.spinnerService.hide();
-      this.fetchAdditionalSlots(5);
-      this.fetchAdditionalSlots(10);
+      // this.fetchAdditionalSlots(5);
+      // this.fetchAdditionalSlots(10);
     });
   }
 
@@ -57,12 +59,17 @@ export class Dashboard {
     for (const date of Object.keys(grouped)) {
       const dateObj = new Date(date);
       const isBookable = dateObj.getTime() - Date.now() <= 14 * 24 * 60 * 60 * 1000;
+      const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6; // Sunday=0, Saturday=6
       for (const court of Object.keys(grouped[date])) {
         const slots = grouped[date][Number(court)];
         slots.sort((a, b) => Number(a.start) - Number(b.start));
         for (let i = 0; i < slots.length; i++) {
           const startNum = Number(slots[i].start);
-          slots[i].isGolden = startNum >= 1500 && startNum < 1900;
+          if (isWeekend) {
+            slots[i].isGolden = startNum >= 800 && startNum < 1800;
+          } else {
+            slots[i].isGolden = startNum >= 1500 && startNum < 1900;
+          }
           slots[i].isJackpot = false;
           slots[i].isBookable = isBookable;
         }
@@ -80,6 +87,23 @@ export class Dashboard {
       }
     }
     return grouped;
+  }
+
+  get filteredOpenSlotsByDateAndCourt() {
+    const base = this.openSlotsByDateAndCourt;
+    if (!this.showGoldenOnly() && !this.showJackpotOnly()) return base;
+    const filtered: typeof base = {};
+    for (const date of Object.keys(base)) {
+      filtered[date] = {};
+      for (const court of Object.keys(base[date])) {
+        filtered[date][Number(court)] = base[date][Number(court)].filter((slot) => {
+          if (this.showGoldenOnly()) return slot.isGolden;
+          if (this.showJackpotOnly()) return slot.isJackpot;
+          return true;
+        });
+      }
+    }
+    return filtered;
   }
 
   get dateBookableMap() {
@@ -163,5 +187,14 @@ export class Dashboard {
         });
       }
     });
+  }
+
+  setGoldenOnly(value: boolean) {
+    this.showGoldenOnly.set(value);
+    if (value) this.showJackpotOnly.set(false);
+  }
+  setJackpotOnly(value: boolean) {
+    this.showJackpotOnly.set(value);
+    if (value) this.showGoldenOnly.set(false);
   }
 }
