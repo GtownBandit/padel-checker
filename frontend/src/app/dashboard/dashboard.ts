@@ -173,23 +173,42 @@ export class Dashboard {
   }
 
   findOpenSlots(slots: Slot[]): { court: number; start: string; date: string }[] {
-    const grouped = new Map<string, Slot[]>();
-    for (const slot of slots) {
-      const key = `${slot.date}|${slot.court}`;
-      if (!grouped.has(key)) grouped.set(key, []);
-      grouped.get(key)!.push(slot);
-    }
+    const dates = Array.from(new Set(slots.map(s => s.date)));
     const openSlots: any[] = [];
-    for (const [key, group] of grouped.entries()) {
-      const [date, courtStr] = key.split('|');
-      const court = Number(courtStr);
-      const allTimes: string[] = [];
-      for (let hour = 8; hour <= 22; hour++) { allTimes.push((hour < 10 ? '0' : '') + hour + '00'); }
-      const taken = new Set(group.map((s) => s.start));
-      for (const start of allTimes) { if (!taken.has(start)) { openSlots.push({ court, start, date }); } }
+
+    // Pre-calculate all times once
+    const allTimes: string[] = [];
+    for (let hour = 8; hour <= 22; hour++) {
+      allTimes.push((hour < 10 ? '0' : '') + hour + '00');
+    }
+
+    // Group bookings by date for efficiency
+    const slotsByDate = new Map<string, Slot[]>();
+    for (const slot of slots) {
+      if (!slotsByDate.has(slot.date)) slotsByDate.set(slot.date, []);
+      slotsByDate.get(slot.date)!.push(slot);
+    }
+
+    for (const date of dates) {
+      const dayBookings = slotsByDate.get(date) || [];
+      for (const courtId of this.courtOrder) {
+        // Find bookings for this specific court on this specific day
+        const takenOnCourt = new Set(
+          dayBookings
+            .filter(s => s.court === courtId)
+            .map(s => s.start)
+        );
+
+        for (const start of allTimes) {
+          if (!takenOnCourt.has(start)) {
+            openSlots.push({ court: courtId, start, date });
+          }
+        }
+      }
     }
     return openSlots;
   }
+
 
   courtName(courtId: number): string {
     const names: Record<number, string> = { 110271: 'Court 1', 110272: 'Court 2', 110273: 'Court 3' };
