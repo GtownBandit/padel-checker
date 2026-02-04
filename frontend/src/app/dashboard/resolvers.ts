@@ -18,6 +18,8 @@ export type EversportsData = {
   slots: Slot[];
 };
 
+import { API_URL } from '../config';
+
 export const dashboardResolver: ResolveFn<EversportsData> = (): Observable<EversportsData> => {
   const spinnerService = inject(SpinnerService);
   spinnerService.show();
@@ -27,6 +29,6 @@ export const dashboardResolver: ResolveFn<EversportsData> = (): Observable<Evers
   const mm = String(today.getMonth() + 1).padStart(2, '0');
   const dd = String(today.getDate()).padStart(2, '0');
   const startDate = `${yyyy}-${mm}-${dd}`;
-  const url = `https://padelapi.pokebot.at/slots?&startDate=${startDate}`;
+  const url = `${API_URL}/slots?&startDate=${startDate}`;
   return http.get<EversportsData>(url);
 };

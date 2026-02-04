@@ -1,9 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { take } from 'rxjs';
 import { EversportsData, Slot } from './resolvers';
 import { HttpClient } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { SpinnerService } from '../spinner.service';
+import { API_URL } from '../config';
+
+const fetchedDates = new Set<string>();
 
 @Component({
   selector: 'app-dashboard',
@@ -20,10 +24,13 @@ export class Dashboard {
   private readonly httpClient = inject(HttpClient);
 
   constructor(private spinnerService: SpinnerService) {
-    this.route.data.subscribe((data) => {
-      this.eversportsData.set({
-        slots: data['data'].slots.filter((slot: Slot) => slot.date !== this.todayString()),
-      });
+    this.route.data.pipe(take(1)).subscribe((data) => {
+      const slots = data['data'].slots.filter((slot: Slot) => slot.date !== this.todayString());
+
+      // Track dates from initial data
+      slots.forEach((slot: Slot) => fetchedDates.add(slot.date));
+
+      this.eversportsData.set({ slots });
       this.spinnerService.hide();
       this.fetchAdditionalSlots(5);
       this.fetchAdditionalSlots(10);
@@ -177,13 +184,25 @@ export class Dashboard {
     const date = new Date();
     date.setDate(date.getDate() + offsetDays);
     const startDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    const url = `https://padelapi.pokebot.at/slots?&startDate=${startDate}`;
-    console.log(url);
+
+    if (fetchedDates.has(startDate)) {
+      console.log(`Skipping fetch for ${startDate} - already in progress or completed`);
+      return;
+    }
+
+    fetchedDates.add(startDate);
+
+    const url = `${API_URL}/slots?&startDate=${startDate}`;
+    console.log(`Fetching more slots: ${url}`);
     this.httpClient.get<EversportsData>(url).subscribe((data: EversportsData) => {
-      const current = this.eversportsData();
-      if (current) {
+      const currentData = this.eversportsData();
+      if (currentData) {
+        // Filter out any potential internal duplicates just in case
+        const nextSlots = data.slots || [];
+        const combinedSlots = [...currentData.slots, ...nextSlots];
+
         this.eversportsData.set({
-          slots: [...current.slots, ...data.slots],
+          slots: combinedSlots
         });
       }
     });
