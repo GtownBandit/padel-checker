@@ -1,8 +1,19 @@
-<router-outlet></router-outlet>
-@if (spinner()) {
-  <div>
-    <div class="fixed inset-0 text-white bg-opacity-75 flex items-center justify-center z-50">
-      <fa-icon [icon]="faSpinner" animation="spin" size="6x"></fa-icon>
-    </div>
+<div class="fixed inset-0 bg-obsidian-900 -z-10">
+  <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(188,19,254,0.1),transparent_50%)]"></div>
+  <div
+    class="absolute top-0 left-0 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-soft-light pointer-events-none">
   </div>
+</div>
+
+<main class="relative z-10">
+  <router-outlet></router-outlet>
+</main>
+
+@if (spinner()) {
+<div class="fixed inset-0 bg-obsidian-900/80 backdrop-blur-md flex items-center justify-center z-[100]">
+  <div class="relative">
+    <div class="absolute inset-0 bg-neon-cyan/20 blur-3xl rounded-full"></div>
+    <fa-icon [icon]="faSpinner" animation="spin" size="6x" class="text-neon-cyan relative z-10"></fa-icon>
+  </div>
+</div>
 }

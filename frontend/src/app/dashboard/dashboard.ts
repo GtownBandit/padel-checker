@@ -6,6 +6,8 @@ import { HttpClient } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { SpinnerService } from '../spinner.service';
 import { API_URL } from '../config';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faStar, faFire } from '@fortawesome/free-solid-svg-icons';
 
 const fetchedDates = new Set<string>();
 
@@ -14,9 +16,12 @@ const fetchedDates = new Set<string>();
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe],
+  imports: [DatePipe, FontAwesomeModule],
 })
 export class Dashboard {
+  readonly faStar = faStar;
+  readonly faFire = faFire;
+
   readonly eversportsData = signal<EversportsData | null>(null);
   readonly showGoldenOnly = signal(false);
   readonly showJackpotOnly = signal(false);
@@ -222,4 +227,47 @@ export class Dashboard {
     if (!filtered) return false;
     return this.courtOrder.some((court) => filtered[court] && filtered[court].length > 0);
   }
+
+  getBookingUrl(slot: { court: number; start: string; date: string; isJackpot?: boolean }): string {
+    const courtUuidMap: Record<number, string> = {
+      110271: 'b540af14-ac2d-40f7-8cd0-4b61a1cd08b3', // Court 1
+      110272: '22d02649-2719-4819-a8c6-a8a5ffde71e8', // Court 2
+      110273: 'f8050665-efd5-42da-a3c5-bac5bf258d80', // Court 3
+    };
+
+
+
+    const facilityUuid = '436c3760-eed7-478d-8c7d-9bf899dae43d';
+    const sportUuid = 'b388f543-69de-11e8-bdc6-02bd505aa7b2'; // Padel Indoor
+    const courtUuid = courtUuidMap[slot.court] || '';
+
+    if (courtUuid.includes('PLACEHOLDER')) {
+      // Fallback to venue page if UUID is unknown
+      return `https://www.eversports.at/sb/padelzone-graz-or-racket-sport-center?sport=padel-indoor&date=${slot.date}`;
+    }
+
+    const startStr = `${slot.date} ${slot.start.slice(0, 2)}:${slot.start.slice(2)}`;
+
+    // Calculate end time (Jackpot/Prime slots are 2h, others 1h)
+    const startDate = new Date(`${slot.date}T${slot.start.slice(0, 2)}:${slot.start.slice(2)}:00`);
+    const durationHours = slot.isJackpot ? 2 : 1;
+    const endDate = new Date(startDate.getTime() + durationHours * 60 * 60 * 1000);
+    const endStr = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')} ${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
+
+    const params = new URLSearchParams({
+      returnTo: `https://www.eversports.at/sb/padelzone-graz-or-racket-sport-center?sport=padel-indoor`,
+      countryCode: 'AT',
+      facilityUuid: facilityUuid,
+      courtUuid: courtUuid,
+      start: startStr,
+      end: endStr,
+      sportUuid: sportUuid,
+      origin: 'eversport',
+      type: 'court-bookable-item',
+      venueId: facilityUuid,
+    });
+
+    return `https://www.eversports.at/checkout/?${params.toString()}`;
+  }
 }
+
